@@ -1,8 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import random
-import threading
 import time
+import statistics
+import threading
+from concurrent.futures import ThreadPoolExecutor
+
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
@@ -71,7 +74,6 @@ def gradient_theta(A, alphas, thetas):
                                 2 * (thetas[i] - thetas[j]) * exp_term / (1 + exp_term)
     return gradient
 
-
 # 对alpha的梯度
 def gradient_alpha(A, alphas, thetas):
     num_nodes = len(alphas)
@@ -87,13 +89,8 @@ def gradient_alpha(A, alphas, thetas):
     
     return gradient
 
-
-def worker(num_samples, k, C, learning_rate, initial_point_1, initial_point_2, results):
-    loss_alpha, loss_theta = main(num_samples, k, C, initial_point_1, initial_point_2, learning_rate)
-    results[num_samples].append((loss_alpha, loss_theta))
-
-
-def main(num_samples, k, C, initial_point_1, initial_point_2, learning_rate):
+# 单个实验
+def main_1(num_samples, k, C, learning_rate):
     # Generate alpha
     random_integers = np.random.rand(num_samples)
 
@@ -112,8 +109,9 @@ def main(num_samples, k, C, initial_point_1, initial_point_2, learning_rate):
     # Generate distance matrix
     distance_matrix_ = distance_matrix(random_vectors)
     
-    point_alpha= initial_point_1
-    point_theta= initial_point_2
+
+    point_alpha = np.random.rand(num_samples)
+    point_theta = np.random.uniform(-45*np.pi/161, 45*np.pi/161, num_samples*k).reshape(num_samples,-1)
 
     logli = f(adjacency_matrix, point_alpha, point_theta)
 
@@ -129,15 +127,15 @@ def main(num_samples, k, C, initial_point_1, initial_point_2, learning_rate):
         grad_y = gradient_theta(adjacency_matrix, point_alpha, point_theta)
         prev_theta = point_theta
         point_theta = Projection(point_theta + learning_rate*grad_y, C)
-        # loss_theta.append(np.linalg.norm(distance_matrix_-distance_matrix(point_theta),ord='nuc'))
-        loss_theta.append(np.linalg.norm(distance_matrix_-distance_matrix(point_theta),ord='nuc')**2/len(initial_point_2)**2)
+        # loss_theta.append(np.linalg.norm(distance_matrix_-distance_matrix(point_theta),ord='fro'))
+        loss_theta.append(np.linalg.norm(distance_matrix_-distance_matrix(point_theta), ord='fro')**2/len(point_theta)**2)
 
         # 更新alpha
         grad_x = gradient_alpha(adjacency_matrix, point_alpha, point_theta)
         prev_alpha = point_alpha
         point_alpha = Projection(point_alpha + learning_rate*grad_x, C)
         # loss_alpha.append(np.linalg.norm(random_integers-point_alpha))
-        loss_alpha.append(np.linalg.norm(random_integers-point_alpha)**2/len(initial_point_1))
+        loss_alpha.append(np.linalg.norm(random_integers-point_alpha)**2/len(point_alpha))
         
         # 更新负对数似然函数
         hahaha.append(logli)
@@ -149,46 +147,63 @@ def main(num_samples, k, C, initial_point_1, initial_point_2, learning_rate):
         #     flag = False
 
         # 绝对误差
-        if (logli-prev_logli) < np.exp(-1):
+        if (logli-prev_logli) < 1/100:
             flag = False
 
     return loss_alpha[-1], loss_theta[-1]
 
+# repeat实验
+def main_2(num, repeat, num_samples, k, C, learning_rate):
+    loss_ = []
+    for _ in range(repeat):
+        loss_.append(main_1(num_samples, k, C, learning_rate))
+    # output
+    alpha_loss_temp = [_[0] for _ in loss_]
+    theta_loss_temp = [_[-1] for _ in loss_]
+    with open(fr'C:\Users\陈颖航\Desktop\overleaf论文\txt\output_{num}.txt', 'a+') as ff:
+        ff.write(f'''When repeat={repeat},
+                for alpha_loss: \t25%:{round(statistics.quantiles(alpha_loss_temp, n=4)[0],4)}, \t75%:{round(statistics.quantiles(alpha_loss_temp, n=4)[-1],4)}, \tmean:{round(statistics.mean(alpha_loss_temp),4)}
+                for theta_loss: \t25%:{round(statistics.quantiles(theta_loss_temp, n=4)[0],4)}, \t75%:{round(statistics.quantiles(theta_loss_temp, n=4)[-1],4)}, \tmean:{round(statistics.mean(theta_loss_temp),4)}\n''')
+        
+        ff.write('\talpha_loss:[')
+        for item in alpha_loss_temp:
+            ff.write(str(round(item,4))+',\t')
+        ff.write(']\n')
 
+        ff.write('\ttheta_loss:[')
+        for item in theta_loss_temp:
+            ff.write(str(round(item,4))+',\t')
+        ff.write(']\n')
+    return loss_
 
+# 线程函数
+def thread_function(num, repeat, k, C, learning_rate, loss_total):
+    # 假设 main_2 是你的主要计算函数
+    loss = main_2(num, repeat, num, k, C, learning_rate)
+    # 在这里，我们需要同步访问 loss_total
+    with threading.Lock():
+        loss_total.append(loss)
 
 if __name__ == '__main__':
     start_time = time.time()
-    train_ = [10, 20, 50, 80, 100, 200, 500]
 
-    # 创建线程池
-    threads = []
+    # 使用线程安全的列表
+    loss_total = []
 
-    # 创建一个字典用于存储每个训练数量对应的结果
-    results = {num: [] for num in train_}
+    # 参数设定
+    repeat = 10
+    k = 2
+    C = 10000
+    learning_rate = 0.01
 
+    train_ = [10, 30, 50, 80, 100, 150, 200]  # 可以添加更多的训练参数
 
-    for num_samples in train_:
-        print(f"Running with {num_samples} samples...")
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = [executor.submit(thread_function, num, repeat, k, C, learning_rate, loss_total) for num in train_]
+        for future in futures:
+            future.result()  # 等待所有线程完成
 
-        for _ in range(10):
-            k = 2
-            C = 1.5
-            learning_rate = 0.001
-
-            initial_point_1 = np.random.rand(num_samples)
-            initial_point_2 = np.random.uniform(-45*np.pi/161, 45*np.pi/161, num_samples*k).reshape(num_samples,-1)
-
-            # 创建线程并将其加入线程池
-            thread = threading.Thread(target=worker, args=(num_samples, k, C, learning_rate, initial_point_1, initial_point_2, results))
-            threads.append(thread)
-            thread.start()
-
-    # 等待所有线程完成
-    for thread in threads:
-        thread.join()
-
-    # 计算总的运行时间
+    # total time
     end_time = time.time()
     total_time = end_time - start_time
     print(f"Total running time: {total_time//60} mins {total_time%60} seconds")
@@ -208,7 +223,7 @@ if __name__ == '__main__':
     plt.xlabel('N')
     plt.ylabel('Loss')
     # plt.show()
-    plt.savefig('./alpha_loss.png')
+    plt.savefig(r'C:\Users\陈颖航\Desktop\overleaf论文\image\alpha_loss.png')
     plt.close('all') #清空缓存
 
     # 画 theta_loss 的箱线图
@@ -219,4 +234,4 @@ if __name__ == '__main__':
     plt.xlabel('N')
     plt.ylabel('Loss')
     # plt.show()
-    plt.savefig('./theta_loss.png')
+    plt.savefig(r'C:\Users\陈颖航\Desktop\overleaf论文\image\theta_loss.png')
