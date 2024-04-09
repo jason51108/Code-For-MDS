@@ -11,7 +11,7 @@ def distance_matrix_3d(point_theta):
     for k in range(a):
         for i in range(b):
             for j in range(i+1, b):
-                dist = np.linalg.norm(point_theta[k, i] - point_theta[k, j])
+                dist = np.linalg.norm(point_theta[k, i] - point_theta[k, j])**2
                 distances[k, i, j] = dist
                 distances[k, j, i] = dist
     return distances
@@ -29,6 +29,7 @@ def average_frobenius_norm_squared(dist_matrix1, dist_matrix2):
         result[i] = norm_squared
     
     return result
+
 
 def frobenius_norm_squared(dist_matrix1, dist_matrix2):
     a, b, _ = dist_matrix1.shape  # 获取矩阵的维度
@@ -122,7 +123,9 @@ def calculate_losses(base_folder, n_values):
         'Avg loss of alpha': {},
         'Max loss of alpha': {},
         'Avg F_norm of distance': {},
-        'F_norm of theta': {}
+        'Max distance':{},
+        'Avg F_norm of theta': {},
+        'two_to_infty of theta':{}
     }
 
     for n in n_values:
@@ -143,11 +146,20 @@ def calculate_losses(base_folder, n_values):
         avg_frobenius = average_frobenius_norm_squared(true_matrix, pred_matrix)
         losses_dict['Avg F_norm of distance'][str(n)] = avg_frobenius
 
+        # Task 4: Max Frobenius norm squared for true and pred theta
+        max_distance = np.array([_.max() for _ in (true_matrix-pred_matrix)])
+        losses_dict['Max distance'][str(n)] = max_distance
+
+
         # Task 5: Frobenius norm squared after transformation
         Theta_star, Theta_tilde_star = maximize_centered(result['true_theta'], result['pred_theta'])
         Q = maximize_trace_3d(Theta_star, Theta_tilde_star)
-        avg_frobenius_transformed = frobenius_norm_squared(transform_space(Theta_tilde_star, Q), Theta_star)
-        losses_dict['F_norm of theta'][str(n)] = avg_frobenius_transformed
+        avg_frobenius_transformed = average_frobenius_norm_squared(transform_space(Theta_tilde_star, Q), Theta_star)
+        losses_dict['Avg F_norm of theta'][str(n)] = avg_frobenius_transformed
+
+        # Task6: two to infty
+        two_to_infty = [np.linalg.norm(_,axis=1).max() for _ in (transform_space(Theta_tilde_star, Q) - Theta_star)]
+        losses_dict['two_to_infty of theta'][str(n)] = two_to_infty
 
     return losses_dict
 
@@ -155,7 +167,7 @@ def calculate_losses(base_folder, n_values):
 def plot_boxplot(data_dict, title='Losses Boxplot'):
     plt.figure(figsize=(15, 9))
     for idx, (key, value) in enumerate(data_dict.items(), start=1):
-        plt.subplot(2, 2, idx)
+        plt.subplot(2, 3, idx)
         plt.boxplot(value.values())
         plt.xticks(range(1, len(value) + 1), value.keys())
         plt.xlabel('N')
@@ -163,13 +175,16 @@ def plot_boxplot(data_dict, title='Losses Boxplot'):
         plt.title(f'{key} Boxplot')
         plt.grid(True)
     plt.tight_layout()
-    plt.show()
+    # plt.show()
+    plt.savefig(r'/data/Test_CYH/image/boxloss.png')
 
 if __name__ == '__main__':
     # Calculate losses and plot boxplots
-    os.chdir(r'c:\Users\陈颖航\Desktop')
-    base_folder = r'para_result'
-    n_values = [10, 30] #, 50, 80, 100, 200, 500, 1000
-
+    os.chdir(r'/data/Test_CYH/code')
+    base_folder = r'/data/Test_CYH/para_result'
+    # n_values = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
+    n_values = [50, 200, 400, 600, 800, 1000]
+    # n_values = [50, 80, 100, 150, 200, 300]
+    # n_values = [10, 30, 50, 80, 100, 150, 200]
     losses_dict = calculate_losses(base_folder, n_values)
     plot_boxplot(losses_dict)
