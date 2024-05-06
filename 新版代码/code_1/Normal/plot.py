@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+import InferMDS_Normal as Ib
 
 
 # 生成距离矩阵
@@ -147,7 +148,7 @@ def calculate_losses(base_folder, n_values):
         losses_dict['Avg F_norm of distance'][str(n)] = avg_frobenius
 
         # Task 4: Max Frobenius norm squared for true and pred theta
-        max_distance = np.array([_.max() for _ in (true_matrix-pred_matrix)])
+        max_distance = np.array([_.max() for _ in np.abs(true_matrix-pred_matrix)])
         losses_dict['Max distance'][str(n)] = max_distance
 
 
@@ -158,13 +159,13 @@ def calculate_losses(base_folder, n_values):
         losses_dict['Avg F_norm of theta'][str(n)] = avg_frobenius_transformed
 
         # Task6: two to infty
-        two_to_infty = [np.linalg.norm(_,axis=1).max() for _ in (transform_space(Theta_tilde_star, Q) - Theta_star)]
+        two_to_infty = [np.linalg.norm(_,axis=1).max() for _ in np.abs(transform_space(Theta_tilde_star, Q) - Theta_star)]
         losses_dict['two_to_infty of theta'][str(n)] = two_to_infty
 
     return losses_dict
 
 # 画图
-def plot_boxplot(data_dict, title='Losses Boxplot'):
+def plot_boxplot(data_dict, setting, title='Losses Boxplot'):
     plt.figure(figsize=(15, 9))
     for idx, (key, value) in enumerate(data_dict.items(), start=1):
         plt.subplot(2, 3, idx)
@@ -176,15 +177,16 @@ def plot_boxplot(data_dict, title='Losses Boxplot'):
         plt.grid(True)
     plt.tight_layout()
     # plt.show()
-    plt.savefig(r'/data/Test_CYH/image/boxloss.png')
+    plt.savefig(rf'/home/user/CYH/Code_For_MDS/image/Normal/{setting}.png')
 
 if __name__ == '__main__':
     # Calculate losses and plot boxplots
-    os.chdir(r'/data/Test_CYH/code')
-    base_folder = r'/data/Test_CYH/para_result'
+    # os.chdir(r'/data/Test_CYH/code')
+    os.makedirs(f'/home/user/CYH/Code_For_MDS/image/Normal/', exist_ok=True)
+    base_folder = rf'/home/user/CYH/Code_For_MDS/para_result/Normal/{Ib.setting}'
     # n_values = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
-    n_values = [50, 200, 400, 600, 800, 1000]
+    n_values = [200, 400, 600, 800, 1000]
     # n_values = [50, 80, 100, 150, 200, 300]
     # n_values = [10, 30, 50, 80, 100, 150, 200]
     losses_dict = calculate_losses(base_folder, n_values)
-    plot_boxplot(losses_dict)
+    plot_boxplot(losses_dict, Ib.setting)
