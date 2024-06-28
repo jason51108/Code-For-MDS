@@ -1,5 +1,5 @@
 import numpy as np
-
+from scipy.special import expit
 
 # 距离的平方
 def Distance_matrix(Theta):
@@ -50,3 +50,53 @@ def Centralize_matrix(matrix):
     column_means = np.mean(matrix, axis=0)
     centralized_matrix = matrix - column_means
     return centralized_matrix
+
+
+# Binomial产生邻接矩阵(通用)
+def Generate_adj_binomial(M):
+    sigmoid_M = expit(M)
+    np.fill_diagonal(sigmoid_M, 0)
+    adjacency_matrix = np.random.binomial(1, sigmoid_M)
+    adjacency_matrix = np.triu(adjacency_matrix, 1) + np.triu(adjacency_matrix, 1).T #保证邻接矩阵是对称的
+    return adjacency_matrix
+
+# Binomial对数似然函数(通用)
+def Log_likelihood_binomial(A, M):
+    sigmoid_M = expit(M)
+    np.fill_diagonal(sigmoid_M, 0)
+    result = np.sum(A * M + np.log(1 - sigmoid_M))
+    # diagonal_correction = np.sum(np.diag(A * M + np.log(1 - sigmoid(np.diag(M))))) #对角线的似然函数值
+    return result
+
+# Binomial对数似然函数(distacne1)
+def Gradient_theta_binomial_distacne1(A, M, thetas):
+    sigmoid_M = expit(M)
+    np.fill_diagonal(sigmoid_M, 0)
+    diff = thetas[:, np.newaxis, :] - thetas[np.newaxis, :, :]
+    term = -(diff * A[:, :, np.newaxis]) + diff * sigmoid_M[:, :, np.newaxis]
+    gradient = np.sum(term, axis=1)
+    return gradient
+
+# Binomial对数似然函数(distacne2)
+def Gradient_theta_binomial_distacne2(A, M, thetas):
+    sigmoid_M = expit(M)
+    np.fill_diagonal(sigmoid_M, 0)
+    diff = thetas[:, np.newaxis, :] - thetas[np.newaxis, :, :]
+    term = -2*(diff * A[:, :, np.newaxis]) + 2*diff * sigmoid_M[:, :, np.newaxis]
+    gradient = np.sum(term, axis=1)
+    return gradient
+
+# Binomial对数似然函数(innner-product)
+def Gradient_theta_binomial_inner(A, M, thetas):
+    sigma_M = expit(M)
+    np.fill_diagonal(sigma_M, 0)
+    dL_dpi = A - sigma_M
+    gradient = np.dot(dL_dpi + dL_dpi.T, thetas)
+    return gradient
+
+# Binomial对数似然函数对alpha的导数
+def Gradient_alpha_binomial(A, M):
+    sigmoid_M = expit(M)
+    np.fill_diagonal(sigmoid_M, 0)
+    gradient = np.sum(A - sigmoid_M, axis=1)
+    return gradient
