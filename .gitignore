@@ -1,3 +1,5 @@
 figure
 dataset
 para_result
+*.pyc
+*.sh
