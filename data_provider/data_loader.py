@@ -12,7 +12,7 @@ def Binomial_data(args):
     true_theta = truncnorm((-2 - 0) / 1, (2 - 0) / 1, loc=0, scale=1).rvs(size=(args.num_samples, args.dimension))
     true_theta = Centralize_matrix(true_theta)
     
-    np.random.seed(args.number) # Ensure that the truth is the same but the adjacency matrix is different.
+    np.random.seed(args.seed_number) # Ensure that the true parameters are the same but the adjacency matrix is different.
     # Choose M
     if args.type == 'distance1':
         Generate_M = Distance_matrix_M_1
@@ -21,7 +21,7 @@ def Binomial_data(args):
     elif args.type == 'inner-product':
         Generate_M = Inner_matrix_M
     else:
-        raise ValueError("type must be distacne1, distacne2 or inner-product")
+        raise ValueError("type must be distance1, distance2 or inner-product")
     
     M = Generate_M(true_alpha, true_theta)
     adjacency_matrix = Generate_adj_binomial(M)
