@@ -26,20 +26,19 @@ class Exp_Parameter_Estimation(Exp_Basic):
     # train
     def train(self):
         start = time.time()
-        pred_alpha, pred_theta, iter = self.model.train(self.adjacency_matrix)
+        pred_alpha, pred_theta, iter = self.model.train(self.adjacency_matrix) # start training
         end = time.time()
         elapsed_time = end - start
         hours, rem = divmod(elapsed_time, 3600)
         minutes, seconds = divmod(rem, 60)
-        print(f'n:{self.args.num_samples}, number:{self.args.number}, iter:{iter}', f'time:{int(hours)}h {int(minutes)}m {seconds:.2f}s')
+        print(f'n:{self.args.num_samples}, number:{self.args.seed_number}, iter:{iter}', f'time:{int(hours)}h {int(minutes)}m {seconds:.2f}s')
         
         # create folder
         folder_path =  (f'/home/user/CYH/Code_For_MDS/Project/para_result/{self.args.task_name}/'
                         f'{self.args.type}/{self.args.model}/'
                         f'{self.args.constrain}_{self.args.dimension}_{self.args.learning_rate}'
                         f'{self.args.patience}_{self.args.tolerace}/'
-                        f'n_{self.args.num_samples}/{self.args.number}/')
-
+                        f'n_{self.args.num_samples}/{self.args.seed_number}/')
         
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
@@ -52,6 +51,3 @@ class Exp_Parameter_Estimation(Exp_Basic):
         np.save(folder_path + f'adjacency_matrix.npy', self.adjacency_matrix)
         
         return None
-        
-
-        
