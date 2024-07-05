@@ -3,3 +3,4 @@ dataset
 para_result
 *.pyc
 *.sh
+__pycache__
