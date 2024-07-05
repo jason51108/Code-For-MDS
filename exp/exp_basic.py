@@ -1,12 +1,14 @@
 import os
-from models import Binomial
+from models import Binomial, Poisson, Normal
 
 class Exp_Basic(object):
     def __init__(self, args):
         self.args = args
         # 模型字典放在这里
         self.model_dict = {
-            'Binomial': Binomial
+            'Binomial': Binomial,
+            'Poisson': Poisson,
+            'Normal': Normal
         }
         self.model = self._build_model()
 

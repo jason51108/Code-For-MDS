@@ -23,21 +23,21 @@ class Model():
         # Choose M
         if self.args.type == 'distance1':
             Generate_M = Distance_matrix_M_1
-            Gradient_theta = Gradient_theta_binomial_distacne1
-            Gradient_alpha = Gradient_alpha_binomial
+            Gradient_theta = Gradient_theta_normal_distacne1
+            Gradient_alpha = Gradient_alpha_normal
         elif self.args.type == 'distance2':
             Generate_M = Distance_matrix_M_2
-            Gradient_theta = Gradient_theta_binomial_distacne2
-            Gradient_alpha = Gradient_alpha_binomial
+            Gradient_theta = Gradient_theta_normal_distacne2
+            Gradient_alpha = Gradient_alpha_normal
         elif self.args.type == 'inner-product':
             Generate_M = Inner_matrix_M
-            Gradient_theta = Gradient_theta_binomial_inner
-            Gradient_alpha = Gradient_alpha_binomial
+            Gradient_theta = Gradient_theta_normal_inner
+            Gradient_alpha = Gradient_alpha_normal
         else:
             raise ValueError("type must be distacne1, distacne2 or inner-product")
         
         M = Generate_M(self.pred_alpha, self.pred_theta, self.args.rho)
-        logli = Log_likelihood_binomial(adjacency_matrix, M)
+        logli = Log_likelihood_normal(adjacency_matrix, M, self.args.scale)
         prev_logli = logli
 
         flag = True
@@ -46,18 +46,18 @@ class Model():
 
         while flag:
             M = Generate_M(self.pred_alpha, self.pred_theta, self.args.rho)
-            grad_y = Gradient_theta(adjacency_matrix, M, self.pred_theta)
+            grad_y = Gradient_theta(adjacency_matrix, M, self.pred_theta, self.args.scale)
             temp_theta = Projection(self.pred_theta + learning_rate * grad_y, self.args.constrain)
 
             if self.args.type == 'distance1':
-                M = Generate_M(self.pred_alpha, temp_theta, self.args.rho) #self.pred_alpha只是占位
-                temp_logli = Log_likelihood_binomial(adjacency_matrix, M)
+                M = Generate_M(self.pred_alpha, temp_theta, self.args.rho)
+                temp_logli = Log_likelihood_normal(adjacency_matrix, M, self.args.scale)
             else:
                 M = Generate_M(self.pred_alpha, temp_theta, self.args.rho)
-                grad_x = Gradient_alpha(adjacency_matrix, M)
+                grad_x = Gradient_alpha(adjacency_matrix, M, self.args.scale)
                 temp_alpha = Projection(self.pred_alpha + learning_rate * grad_x, self.args.constrain)
                 M = Generate_M(temp_alpha, temp_theta, self.args.rho)
-                temp_logli = Log_likelihood_binomial(adjacency_matrix, M)
+                temp_logli = Log_likelihood_normal(adjacency_matrix, M, self.args.scale)
     
             if temp_logli - prev_logli < 0:
                 learning_rate /= 5

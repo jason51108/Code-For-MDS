@@ -64,7 +64,7 @@ def plot_boxplot(data_dict, setting, title='Boxplot of losses'):
     num_plots = len(data_dict)
     
     for idx, (key, value) in enumerate(data_dict.items(), start=1):
-        plt.subplot(2, 2, idx)
+        plt.subplot(2, 3, idx)
         # plt.subplot(1, num_plots, idx)
         plt.boxplot(value.values())
         plt.xticks(range(1, len(value) + 1), value.keys())

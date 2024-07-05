@@ -1,15 +1,23 @@
-from data_provider.data_loader import Binomial_data
+from data_provider.data_loader import Binomial_data, Poisson_data, Normal_data, Custom_data
 
 data_dict = {
-    'Binomial': Binomial_data
+    'Binomial': Binomial_data,
+    'Poisson': Poisson_data,
+    'Normal': Normal_data,
+    'Custom': Custom_data
 }
 
 
 def data_provider(args):
-    Data = data_dict[args.model]
+    # choose data
+    if args.data == 'Simulation':
+        Data = data_dict[args.model]
+    elif args.data == 'Custom':
+        Data = data_dict['Custom']
     
     if args.task_name == 'parameter estimation':
-        true_alpha, true_theta, adjacency_matrix = Data(args)
+        result = Data(args)
+
         
     elif args.task_name == 'classification':
         pass
@@ -17,4 +25,4 @@ def data_provider(args):
     elif args.task_name == 'matrix completion':
         pass
     
-    return true_alpha, true_theta, adjacency_matrix
+    return result
