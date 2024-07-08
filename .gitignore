@@ -1,6 +1,7 @@
 figure
 dataset
 para_result
+run.py
 *.pyc
 *.sh
 __pycache__
