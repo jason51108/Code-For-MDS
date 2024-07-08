@@ -29,14 +29,14 @@ if __name__ == '__main__':
     parser.add_argument('--dimension', type=int, default=2, help='model dimension')
 
     # data loader
-    parser.add_argument('--data', type=str, default='Custom', help='options:[Simulation, Custom]') # , required=True
+    parser.add_argument('--data', type=str, default='Simulation', help='options:[Simulation, Custom]') # , required=True
     parser.add_argument('--root_path', type=str, default='./data_provider/dataset/') #/home/user/CYH/Code_For_MDS/Project
     parser.add_argument('--data_path', type=str, default='adjacency_matrix.npy')
     
     # optimization
-    parser.add_argument('--learning_rate', type=float, default=0.1, help='optimizer learning rate')
+    parser.add_argument('--learning_rate', type=float, default=1, help='optimizer learning rate')
     parser.add_argument('--patience', type=str, default='relative', help='likelihood function increases proportion, options: [relative, absolute]')
-    parser.add_argument('--tolerace', type=float, default=0.01, help='tolerace of patience')
+    parser.add_argument('--tolerace', type=float, default=0.00000001, help='tolerace of patience')
 
     # especially for normal distributions
     parser.add_argument('--scale', type=float, default=1.0, help='variance of normal distribution')
