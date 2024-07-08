@@ -36,8 +36,11 @@ def frobenius_norm_squared(dist_matrix1, dist_matrix2):
     return norm_squared
 
 # 生成单个n的集合
-def stack_arrays(base_path):
-    filenames = ["pred_alpha", "true_alpha", "pred_theta", "true_theta"]
+def stack_arrays(args, base_path):
+    if args.type == 'distance1':
+        filenames = ["pred_theta", "true_theta"]
+    else:
+        filenames = ["pred_alpha", "true_alpha", "pred_theta", "true_theta"]
     results = {filename: [] for filename in filenames}
 
     subfolders = sorted([os.path.join(base_path, d) for d in os.listdir(base_path)], key=lambda x: int(os.path.basename(x)))
@@ -59,12 +62,15 @@ def stack_arrays(base_path):
     
     return results
 
-def plot_boxplot(data_dict, setting, title='Boxplot of losses'):
+def plot_boxplot(args, data_dict, setting, title='Boxplot of losses'):
     plt.figure(figsize=(16, 10))
     num_plots = len(data_dict)
     
     for idx, (key, value) in enumerate(data_dict.items(), start=1):
-        plt.subplot(2, 3, idx)
+        if args.type in ['distance1']:
+            plt.subplot(2, 2, idx)
+        elif args.type in ['distance2', 'inner-product']:
+            plt.subplot(2, 3, idx)
         # plt.subplot(1, num_plots, idx)
         plt.boxplot(value.values())
         plt.xticks(range(1, len(value) + 1), value.keys())
