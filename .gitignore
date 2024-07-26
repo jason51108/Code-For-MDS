@@ -5,3 +5,4 @@ run.py
 *.pyc
 *.sh
 __pycache__
+exp/__pycache__/exp_parameter_estimation.cpython-311.pyc
